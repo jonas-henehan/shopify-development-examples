@@ -1,0 +1,153 @@
+{% assign address = checkout.shipping_address %}
+
+{%- if address.country_code == 'TW' -%}
+  <style>
+    .plus__additional-information--wrapper {
+      display: none;
+    }
+
+    .plus-field-error input {
+      border-color: {{ settings.checkout_error_color }} !important;
+      -webkit-box-shadow: 0 0 0 1px {{ settings.checkout_error_color }};
+      box-shadow: 0 0 0 1px {{ settings.checkout_error_color }};
+    }
+
+    .plus-field-error__message {
+      line-height: 1.3em;
+      margin: 0.57143em 0 0.28571em;
+      color: {{ settings.checkout_error_color }};
+    }
+  </style>
+
+  <div class="plus__additional-information--wrapper">
+    <div class="section" data-plus-additional-information>
+
+      {% for attribute in checkout.attributes %}
+        <input type=hidden name="checkout[attributes][{{ attribute.first }}]" value="{{ attribute.last  }}">
+      {% endfor %}
+
+      <div class="section__header">
+        <h2 class="section__title">{{ 'plus.checkout.additional_information' | t }}</h2>
+      </div>
+
+      <div data-plus-field>
+        <label class="field__label field__label--visible" for="checkoutResidentId" data-plus-label>
+          {{ 'plus.checkout.resident_id_placeholder' | t }}
+        </label>
+        <input type="text"
+               maxlength="10"
+               placeholder="{{ 'plus.checkout.resident_id_placeholder' | t }}"
+               autocorrect="off"
+               class="field__input"
+               aria-required="true"
+               size="30"
+               name="checkout[attributes][{{ 'plus.checkout.resident_id_placeholder' | t }}]"
+               id="checkoutResidentId"
+               data-plus-input>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function($) {
+      window.Plus = window.Plus || {};
+      window.Plus.checkout = window.Plus.checkout || {};
+
+      Plus.checkout.residentIdSettings = {
+        additionalInformationWrapper: '[data-plus-additional-information]',
+        residentIdField: '[data-plus-field]',
+        residentIdInput: '[data-plus-input]',
+        fieldErrorClass: 'plus-field-error',
+        fieldErrorMessageClass: 'plus-field-error__message',
+        fieldErrorSelector: '.plus-field-error__message',
+        errorText: '{{ 'plus.checkout.resident_id_error' | t }}',
+        paymentFormSection: '[data-payment-method]',
+        formSelector: '[data-step="payment_method"] form',
+        submitButton: 'button[type="submit"]',
+        regex: /[a-zA-Z]{1}\d{9}/
+      }
+
+      Plus.checkout.showResidentIdField = (settings) => {
+        // Push input into payment form
+        $(settings.paymentFormSection).before($(settings.additionalInformationWrapper));
+
+        const $input = $(settings.residentIdInput);
+
+        // Override form submission
+        $(settings.submitButton).on('click', function(e) {
+          e.preventDefault();
+          let inputFilled = false;
+
+          // Test input on payment form submission just to be safe
+          if (Plus.checkout.residentIdRegex($input, settings)) {
+            inputFilled = true;
+          } else {
+            inputFilled = false;
+          };
+
+          // Submit form on valid input
+          if (inputFilled) {
+            $(this).closest(settings.formSelector).submit();
+          }
+        });
+
+        // Run regex on field once focus shifts
+        $input.blur(function() {
+          Plus.checkout.residentIdRegex($(this), settings);
+        });
+
+        // Change default action for 'enter' key to be a 'click' event
+        $(settings.formSelector).on('keyup', function(e) {
+          if (e.keycode === 13) {
+            e.preventDefault;
+            $(settings.submitButton).trigger('click');
+          };
+        });
+        
+        // Test input and apply error classes as required
+        Plus.checkout.residentIdRegex = function(self, settings) {
+          let inputFilled = true,
+              $this = $(self),
+              $parent = $this.closest(settings.residentIdField);
+          if (!(settings.regex.test($this.val()))) {
+            inputFilled = false;
+            if (!($parent.hasClass(settings.fieldErrorClass))) {
+              $parent.addClass(settings.fieldErrorClass);
+            }
+            if ($parent.find(settings.fieldErrorSelector).length < 1) {
+              $parent.append('<p class="' + settings.fieldErrorMessageClass + '">' + settings.errorText +'</p>');
+            }
+          } else {
+            if ($parent.hasClass(settings.fieldErrorClass)) {
+              $parent.removeClass(settings.fieldErrorClass);
+            }
+            if ($parent.find(settings.fieldErrorSelector).length > 0) {
+              $parent.find(settings.fieldErrorSelector).remove();
+            }
+          };
+          return inputFilled;
+        };
+
+        // Remove error classes upon refocus of input
+        $input.focus(function() {
+          let $parent = $(this).closest(settings.residentIdField);
+          if ($parent.hasClass(settings.fieldErrorClass)) {
+            $parent.removeClass(settings.fieldErrorClass);
+          }
+          if ($parent.find(settings.fieldErrorSelector).length > 0) {
+            $parent.find(settings.fieldErrorSelector).remove();
+          }
+        });
+
+      };
+
+      // Fun function on payment step
+      if (Shopify.Checkout.step === 'payment_method') {
+        $(document).on('page:load page:change', function() {
+          Plus.checkout.showResidentIdField(Plus.checkout.residentIdSettings);
+        });
+      };
+
+    })(Checkout.$);
+  </script>
+{%- endif -%}
