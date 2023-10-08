@@ -1,0 +1,412 @@
+{{- 'gift-with-purchase.css' | asset_url | stylesheet_tag -}}
+<script src="{{ 'gift-with-purchase.js'  | asset_url }}" defer></script>
+
+{%- if settings.enable_free_gift -%}
+  {%- liquid
+    assign free_product = settings.free_gift_product
+    assign free_product_2 = settings.free_gift_product_2
+     
+    assign tier_one_threshold = settings.free_gift_threshold | times: 100
+    assign tier_two_threshold = settings.free_gift_threshold_2 | times: 100
+    assign title = settings.free_gift_product_1_title | prepend: "a "
+     
+    if cart.total_price < tier_one_threshold
+      assign remaining_value = tier_one_threshold | minus: cart.total_price
+      assign tier_reached = 0
+    endif
+
+    if cart.total_price >= tier_one_threshold and cart.total_price < tier_two_threshold
+      assign remaining_value = tier_two_threshold | minus: cart.total_price
+      assign title = settings.free_gift_product_2_title
+      assign tier_reached = 1
+    endif
+
+    if cart.total_price >= tier_two_threshold
+      assign remaining_value = tier_two_threshold | minus: cart.total_price
+      assign title = settings.free_gift_product_2_title
+      assign tier_reached = 2
+    endif
+
+    for item in cart.items
+      if item.properties["_Gift"] == '1'
+        assign product_one_in_cart = true
+      endif
+      if item.properties["_Gift"] == '2'
+        assign product_two_in_cart = true
+      endif
+    endfor
+    
+    assign threshold_reached = false
+
+    if free_product_2 != blank
+     assign bar_width = cart.total_price | times: 1.00 | divided_by: tier_two_threshold | times: 100 | at_most: 100
+     assign step_width = 50
+     if cart.total_price >= tier_two_threshold
+       assign threshold_reached = true
+     endif
+    else
+     assign bar_width = cart.total_price | times: 1.00 | divided_by: tier_one_threshold | times: 100 | at_most: 100
+     assign step_width = 100
+     if cart.total_price >= tier_one_threshold
+       assign threshold_reached = true
+     endif
+    endif
+     
+    assign threshold_width = tier_one_threshold | times: 1.00 | divided_by: tier_two_threshold | times: 100 | at_most: 100
+
+  -%}
+
+  {%- capture value_left -%}
+    <span data-remaining-value>
+      {%- if settings.currency_code_enable -%}
+        {{- remaining_value | minus: cart_total_price | money_with_currency | remove: '.00' | remove: ',00' -}}
+      {%- else -%}
+        {{- remaining_value | minus: cart_total_price | money_without_trailing_zeros -}}
+      {%- endif -%}
+    </span>
+  {%- endcapture -%}
+
+  {%- assign free_gift_message = settings.free_gift_message | replace: '||amount||', value_left -%}
+  {%- assign free_gift_message = free_gift_message | replace: "||product_title||", title -%}
+
+  <free-gift
+    data-threshold="{{ tier_one_threshold }}"
+    {% if free_product_2 != blank %} data-threshold-two="{{ tier_two_threshold }}"{% endif %}
+    data-cart-total-price="{{ cart_total_price }}"
+    data-gift-title-one="{{ settings.free_gift_product_1_title }}"
+    data-gift-title-two="{{ settings.free_gift_product_2_title }}">
+    {%- if free_product_2 != blank -%}
+      
+      {%- comment -%} Two tier gift with purchase {%- endcomment -%}
+      
+      <div class="cart-progress__multi">
+        <div class="cart-progress__steps count-{{ step_count }}" data-gift-meta>
+          <div class="cart-progress__step" style="width: {{ step_width }}%">
+            <div class="cart-progress__step--icon">
+              {%- if settings.free_product_image -%}
+                {%- assign product_image_1 = settings.free_product_image -%}
+              {%- else -%}
+                {%- assign product_image = free_product.featured_image -%}
+              {%- endif -%}
+              {%- liquid
+                assign image_url_pattern = product_image_1 | img_url: '1x1' | replace: '_1x1.', '_{width}x.'
+                assign image_widths = "[90,160,180,270,320]"
+              -%}
+              <div class="free-gift__image-wrapper">
+                <img src="{{ product_image_1 | image_url }}"
+                  data-src="{{ image_url_pattern }}"
+                  data-aspectratio="{{ product_image_1.aspect_ratio | default: 1 }}"
+                  data-widths= "{{ image_widths }}"
+                  data-sizes="auto"
+                  alt="{{ free_product.title | strip_html | escape }}">
+                <noscript>
+                  <img src="{{ product_image_1 | img_url: '160x' }}" alt="{{ free_product.title | strip_html | escape }}">
+                </noscript>
+              </div>
+            </div>
+            <p class="cart-progress__step--label">{{ settings.free_gift_product_1_title }}</p>
+            <p class="cart__item__price">
+              <span>
+                <span class="visually-hidden">{{ 'oakreativ.products.sale_price' | t }}</span>
+                <ins>{{- 'oakreativ.free_gift.free' | t -}}</ins>
+              </span>
+              <span>
+                <span class="visually-hidden">{{ 'oakreativ.products.regular_price' | t }}</span>
+                <del>{{- settings.free_gift_product.price_max | money -}}</del>
+              </span>                
+            </p>
+          </div>
+      
+          <div class="cart-progress__step" style="width: {{ step_width }}%">
+            <div class="cart-progress__step--icon">
+              {%- if settings.free_product_image_2 -%}
+                {%- assign product_image_2 = settings.free_product_image_2 -%}
+              {%- else -%}
+                {%- assign product_image_2 = free_product_2.featured_image -%}
+              {%- endif -%}
+              {%- liquid
+                assign image_url_pattern_2 = product_image_2 | img_url: '1x1' | replace: '_1x1.', '_{width}x.'
+                assign image_widths_2 = "[90,160,180,270,320]"
+              -%}
+              <div class="free-gift__image-wrapper">
+                <img src="{{ product_image_2 | image_url }}"
+                  data-src="{{ image_url_pattern_2 }}"
+                  data-aspectratio="{{ product_image.aspect_ratio | default: 1 }}"s
+                  data-widths= "{{ image_widths_2 }}"
+                  data-sizes="auto"
+                  alt="{{ free_product_2.title | strip_html | escape }}">
+                <noscript>
+                  <img src="{{ product_image_2 | img_url: '160x' }}" alt="{{ free_product_2.title | strip_html | escape }}">
+                </noscript>
+              </div>
+            </div>
+      
+            <p class="cart-progress__step--label">{{ settings.free_gift_product_2_title }}</p>
+            <p class="cart__item__price">
+              <span>
+                <span class="visually-hidden">{{ 'oakreativ.products.sale_price' | t }}</span>
+                <ins>{{- 'oakreativ.free_gift.free' | t -}}</ins>
+              </span>
+              <span>
+                <span class="visually-hidden">{{ 'oakreativ.products.regular_price' | t }}</span>
+                <del>{{- settings.free_gift_product_2.price_max | plus: settings.free_gift_product.price_max | money -}}</del>
+              </span>                
+            </p>
+      
+          </div>
+        </div>
+      
+        <div class="cart-progress__bar ">
+          <div class="cart-progress__bar--fill" data-gift-progress value="{{ bar_width }}" max="100" style="--progress-width: {{ bar_width }}%;"></div>
+          <div class="cart-progress__bar--fill threshold-indicator" style="--progress-width: {{ threshold_width }}%;"></div>
+        </div>
+        {%- if product_one_in_cart and product_two_in_cart -%}
+          <div class="free-gift__heading">
+            <span>{{ 'oakreativ.free_gift.threshold_reached_added' | t: count: 2  }}</span>
+          </div>
+        {%- elsif threshold_reached -%}
+          <div class="free-gift__heading">
+            <span>{{ 'oakreativ.free_gift.threshold_reached' | t: count: 2  }}</span>
+          </div>
+        {%- else -%}
+          <div class="free-gift__heading">{{ free_gift_message }}</div>
+        {%- endif -%}      
+      </div>
+      {%- unless product_one_in_cart and product_two_in_cart -%}
+       <div class="cart-progress__free-products">
+         <div class="cart-progress__free-products--list">
+            {% if tier_reached == 1 or tier_reached == 2 %}
+              {%- unless product_one_in_cart -%}
+                <div class="cart-progress__free-product">
+                  <div class="free-product__image-wrapper">
+                  {% unless free_product.has_only_default_variant %}
+                    {%- for variant in free_product.variants -%}
+                      <img id="variant-image--{{ variant.id }}"
+                           class="cart__items__img"
+                           src="{{ variant.image | img_url: '180x' }}"
+                           alt="{{ variant.title | strip_html | escape }}"
+                           {% if forloop.first %}style="opacity: 1"{% endif %}
+                      >
+                    {%- endfor -%}
+                  {%- else -%}
+                    <img id="{{ free_product.id }}"
+                     class="cart__items__img"
+                     src="{{ free_product.featured_image | img_url: '180x' }}"
+                     alt="{{ free_product.title | strip_html | escape }}"
+                     style="opacity: 1"
+                    >
+                  {%- endunless -%}
+                  </div>
+                  <div data-gift-form data-gift="1" class="product-cart-item-info cart-progress__free-product--info">
+                    <p class="cart__items__title cart-product-link cart-progress__free-product--title">{{ settings.free_gift_product_1_title }}</p> <!---->
+                    <span class="price cart-progress__free-product--price">
+                      {%- if settings.currency_code_enabled -%}
+                        <del><span class="amount">{{ free_product.price_max | money_with_currency }}</span></del>
+                      {%- else -%}
+                        <del><span class="amount">{{ free_product.price_max | money }}</span></del>
+                      {%- endif -%}
+                      <ins><span class="amount">{{ 'oakreativ.free_gift.free' | t }}</span></ins>
+                    </span>
+                    <div class="cart-progress__free-product--variant-select-container">
+                      {% unless free_product.has_only_default_variant %}
+                        <select id="{{ free_product.id }}" name="variant" title="Variant" class="cart-progress__free-product--variant-select">
+                          <option value="" disabled="disabled" selected="selected">Select Variant</option>
+                          {%- for variant in free_product.variants -%}
+                              <option
+                                {% unless variant.available %}disabled="disabled"{% endunless %}
+                                value="{{ variant.id }}"
+                                data-sku="{{ variant.sku }}">{{ variant.title }}{% unless variant.available %} - Sold out{% endunless %}
+                              </option>
+                          {%- endfor -%}
+                        </select>
+                      {%- else -%}
+                         <input
+                          id="{{ free_product.id }}"
+                          type="hidden"
+                          name="variant"
+                          data-sku="{{ free_product.selected_or_first_available_variant.sku }}"
+                          value="{{ free_product.selected_or_first_available_variant.id }}">
+                      {%- endunless -%}
+                      {% if free_product.available %}
+                        {%- if settings.age_restricted_one -%}
+                          <div class="cart-progress__checkbox--wrapper">
+                            <input type="checkbox" required>
+                             <label>{{ 'oakreativ.free_gift.age_restriction_label' | t }}</label>
+                          </div>
+                        {%- endif -%}
+                        <button data-add-gift class="btn--outline uppercase cart-progress__free-product--add"{% unless free_product.has_only_default_variant %} disabled{% endunless %}>Add to Cart</button>
+                      {% else %}
+                        <button data-add-gift class="btn--outline uppercase cart-progress__free-product--add" disabled>Sold out</button>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {%- endunless -%}
+              {% if tier_reached == 2 and free_product_2 != blank -%}
+                {%- unless product_two_in_cart -%}
+                  <div class="cart-progress__free-product">
+                    <div class="free-product__image-wrapper">
+                      {% unless free_product_2.has_only_default_variant %}
+                        {%- for variant in free_product_2.variants -%}
+                          <img id="variant-image--{{ variant.id }}"
+                               class="cart__items__img"
+                               src="{{ variant.image | img_url: '180x' }}"
+                               alt="{{ variant.title | strip_html | escape }}"
+                               {% if forloop.first %}style="opacity: 1"{% endif %}
+                          >
+                        {%- endfor -%}
+                      {%- else -%}
+                        <img id="{{ free_product_2.id }}"
+                         class="cart__items__img"
+                         src="{{ free_product_2.featured_image | img_url: '180x' }}"
+                         alt="{{ free_product_2.title | strip_html | escape }}"
+                         style="opacity: 1"
+                        >
+                      {%- endunless -%}
+                    </div>
+                    <div class="product-cart-item-info cart-progress__free-product--info">
+                      <p class="cart__items__title cart-product-link cart-progress__free-product--title">{{ settings.free_gift_product_2_title }}</p>
+                      <span class="price cart-progress__free-product--price">
+                        {%- if settings.currency_code_enabled -%}
+                          <del><span class="amount">{{ free_product_2.price_max | money_with_currency }}</span></del>
+                        {%- else -%}
+                          <del><span class="amount">{{ free_product_2.price_max | money }}</span></del>
+                        {%- endif -%}
+                        <ins><span class="amount">{{ 'oakreativ.free_gift.free' | t }}</span></ins>
+                      </span>
+                      <div data-gift-form data-gift="2" class="cart-progress__free-product--variant-select-container">
+                        {% unless free_product_2.has_only_default_variant %}
+                          <select id="{{ product.id }}" name="variant" title="Variant" class="cart-progress__free-product--variant-select">
+                            <option value="" disabled="disabled" selected="selected">Select Variant</option>
+                            {%- for variant in free_product_2.variants -%}
+                                <option
+                                  {% unless variant.available %}disabled="disabled"{% endunless %}
+                                  value="{{ variant.id }}"
+                                  data-sku="{{ variant.sku }}">{{ variant.title }}{% unless variant.available %} - Sold out{% endunless %}
+                                </option>
+                            {%- endfor -%}
+                          </select>
+                        {%- else -%}
+                          <input
+                            id="{{ free_product_2.id }}"
+                            type="hidden"
+                            name="variant"
+                            data-sku="{{ free_product_2.selected_or_first_available_variant.sku }}"
+                            value="{{ free_product_2.selected_or_first_available_variant.id }}">
+                        {%- endunless -%}
+                        {% if free_product_2.available %}
+                          {%- if settings.age_restricted_two -%}
+                            <div class="cart-progress__checkbox--wrapper">
+                              <input type="checkbox" required>
+                               <label>{{ 'oakreativ.free_gift.age_restriction_label' | t }}</label>
+                            </div>
+                          {%- endif -%}
+                          <button data-add-gift class="btn--outline uppercase cart-progress__free-product--add"{% unless free_product_2.has_only_default_variant %} disabled{% endunless %}>Add to Cart</button>
+                        {% else %}
+                          <button data-add-gift class="btn--outline uppercase cart-progress__free-product--add" disabled>Sold out</button>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                {%- endunless -%}
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      {% endunless %}
+    {%- else -%}
+            
+      {%- comment -%} Single gift with purchase {%- endcomment -%}
+      
+      <div class="cart-progress__single">
+        <div class="free-gift__wrapper">
+          {%- unless product_one_in_cart -%}
+            <div class="cart-progress__free-product">
+              <div class="free-product__image-wrapper">
+              {% unless free_product.has_only_default_variant %}
+                {%- for variant in free_product.variants -%}
+                  <img id="variant-image--{{ variant.id }}"
+                       class="cart__items__img"
+                       src="{{ variant.image | img_url: '180x' }}"
+                       alt="{{ variant.title | strip_html | escape }}"
+                       {% if forloop.first %}style="opacity: 1"{% endif %}
+                  >
+                {%- endfor -%}
+              {%- else -%}
+                <img id="{{ free_product.id }}"
+                 class="cart__items__img"
+                 src="{{ free_product.featured_image | img_url: '180x' }}"
+                 alt="{{ free_product.title | strip_html | escape }}"
+                 style="opacity: 1"
+                >
+              {%- endunless -%}
+              </div>
+              <div data-gift-form data-gift="1" class="product-cart-item-info cart-progress__free-product--info">
+                <p class="cart__items__title cart-product-link cart-progress__free-product--title">{{ settings.free_gift_product_1_title }}</p> <!---->
+                <span class="price cart-progress__free-product--price">
+                  {%- if settings.currency_code_enabled -%}
+                    <del><span class="amount">{{ free_product.price_max | money_with_currency }}</span></del>
+                  {%- else -%}
+                    <del><span class="amount">{{ free_product.price_max | money }}</span></del>
+                  {%- endif -%}
+                  <ins><span class="amount">{{ 'oakreativ.free_gift.free' | t }}</span></ins>
+                </span>
+                {%- if threshold_reached -%}
+                  <div class="cart-progress__free-product--variant-select-container">
+                    {% unless free_product.has_only_default_variant %}
+                      <select id="{{ free_product.id }}" name="variant" title="Variant" class="cart-progress__free-product--variant-select">
+                        <option value="" disabled="disabled" selected="selected">Select Variant</option>
+                        {%- for variant in free_product.variants -%}
+                            <option
+                              {% unless variant.available %}disabled="disabled"{% endunless %}
+                              value="{{ variant.id }}"
+                              data-sku="{{ variant.sku }}">{{ variant.title }}{% unless variant.available %} - Sold out{% endunless %}
+                            </option>
+                        {%- endfor -%}
+                      </select>
+                     {%- else -%}
+                       <input
+                        id="{{ free_product.id }}"
+                        type="hidden"
+                        name="variant"
+                        data-sku="{{ free_product.selected_or_first_available_variant.sku }}"
+                        value="{{ free_product.selected_or_first_available_variant.id }}">
+                    {%- endunless -%}
+                    {% if free_product.available %}
+                      {%- if settings.age_restricted_one -%}
+                        <div class="cart-progress__checkbox--wrapper">
+                          <input type="checkbox" required>
+                          <label>{{ 'oakreativ.free_gift.age_restriction_label' | t }}</label>
+                        </div>
+                      {%- endif -%}
+                      <button data-add-gift class="btn--outline uppercase cart-progress__free-product--add"{% unless free_product.has_only_default_variant %} disabled{% endunless %}>Add to Cart</button>
+                    {% else %}
+                      <button data-add-gift class="btn--outline uppercase cart-progress__free-product--add" disabled>Sold out</button>
+                    {% endif %}
+                  </div>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endunless -%}
+          </div>
+          {%- unless product_one_in_cart -%}
+            <div class="cart-progress__bar">
+              <div class="cart-progress__bar--fill" data-gift-progress value="{{ bar_width }}" max="100" style="--progress-width: {{ bar_width }}%;"></div>
+            </div>
+          {%- endunless -%}
+          {%- if product_one_in_cart -%}
+            <div class="free-gift__heading">
+              <span>{{ 'oakreativ.free_gift.threshold_reached_added' | t: count: 1 }}</span>
+            </div>
+          {%- elsif threshold_reached -%}
+            <div class="free-gift__heading">
+              <span>{{ 'oakreativ.free_gift.threshold_reached' | t: count: 1  }}</span>
+            </div>
+          {%- else -%}
+            <div class="free-gift__heading">{{ free_gift_message }}</div>
+          {%- endif -%}    
+        </div>
+     {%- endif -%}
+  </free-gift>
+{%- endif -%}
+

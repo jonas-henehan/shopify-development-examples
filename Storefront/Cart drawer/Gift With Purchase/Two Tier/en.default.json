@@ -1,0 +1,22 @@
+
+{
+  "oakreativ": {
+    "free_gift": {
+      "subheading_html": "Claim a free gift worth ${{ product_value }} with orders over ${{ threshold }}",
+      "threshold_reached": {
+        "one": "Add your free gift above.",
+        "two": "Add your free gifts below."
+      },
+      "threshold_reached_added": {
+        "one": "Enjoy your free gift!",
+        "two": "Enjoy your free gifts!"
+      },
+      "free": "Free",
+      "age_restriction_label": "I am over 18"
+    },
+    "products": {
+      "sale_price": "Sale price",
+      "regular_price": "Regular price"
+    }
+  }
+}

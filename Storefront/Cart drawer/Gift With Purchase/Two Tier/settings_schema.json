@@ -1,0 +1,96 @@
+[
+  {
+    "name": "oakreativ",
+    "theme_name": "Oakreativ",
+    "theme_author": "Oakreativ",
+    "theme_version": "1.0.0",
+    "theme_support_url": "https:\/\/oakreativ.nz\/contact",
+    "theme_documentation_url": "https:\/\/oakreativ.nz",
+    "theme_support_email": "jonas@oakreativ.nz"
+  },
+  {
+    "name": "oakreativ",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Gift with purchase"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_free_gift",
+        "label": "Enable free gift"
+      },
+      {
+        "type": "product",
+        "id": "free_gift_product",
+        "label": "Tier one gift"
+      },
+      {
+        "type": "image_picker",
+        "id": "free_product_image",
+        "label": "Product image",
+        "info": "Replaces default product image on two tier layout"
+      },
+      {
+        "type": "text",
+        "id": "free_gift_product_1_title",
+        "label": "Tier one gift title"
+      },
+      {
+        "type": "checkbox",
+        "id": "age_restricted_one",
+        "label": "Product is age restricted",
+        "default": false
+      },
+      {
+        "type": "product",
+        "id": "free_gift_product_2",
+        "label": "Tier two gift"
+      },
+      {
+        "type": "image_picker",
+        "id": "free_product_image_2",
+        "label": "Product image",
+        "info": "Replaces default product image on two tier layout"
+      },
+      {
+        "type": "text",
+        "id": "free_gift_product_2_title",
+        "label": "Tier two gift title"
+      },
+      {
+        "type": "checkbox",
+        "id": "age_restricted_two",
+        "label": "Product is age restricted",
+        "default": false
+      },
+      {
+        "type": "textarea",
+        "id": "free_gift_message",
+        "label": "Message",
+        "info": "Use ||amount|| to display progress towards next threshold. ||product_title|| will pull the next threshold's product title",
+        "default": "Spend ||amount|| more to get a FREE ||product_title||"
+      },
+      {
+        "type": "text",
+        "id": "thresholds_met",
+        "label": "All threshold met message",
+        "default": "Your free gifts have been added to the cart"
+      },
+      {
+        "type": "text",
+        "id": "free_gift_threshold",
+        "label": "Tier one gift threshold",
+        "info": "e.g., \"100\"",
+        "default": "100"
+      },
+      {
+        "type": "text",
+        "id": "free_gift_threshold_2",
+        "label": "Tier two gift threshold",
+        "info": "e.g., \"100\"",
+        "default": "150"
+      }
+    ]
+  }
+]

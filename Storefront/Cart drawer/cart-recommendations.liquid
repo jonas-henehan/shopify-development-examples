@@ -1,0 +1,62 @@
+{%- comment -%}
+  {%- render 'product-recommendations', section: section, cart: cart -%}
+{%- endcomment -%}
+
+
+{%- if settings.cart_recommendations %}
+   <div class="cart-drawer--recommendations--container product-recommendations--parent">
+    <product-recommendations
+      class="cart-drawer--recommendations"
+      data-url="{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ cart.items[0].product_id }}&limit=4"
+    >
+      {% if recommendations.performed and recommendations.products_count > 0 %}
+        <h6 class="cart-drawer--recommendations--heading">{{ 'general.cart_drawer.you_may_also_like' | t }}</h6>
+        <div class="cart-drawer--recommendations--products">
+          {% for recommendation in recommendations.products %}
+            {%- render 'product-grid-item',
+              product: product,
+              per_row: 4,
+              quick_shop_enable: settings.quick_shop_enable -%}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </product-recommendations>
+  </div>
+{%- endif -%}
+
+<script>
+  class ProductRecommendations extends HTMLElement {
+    constructor() {
+      super();
+      this.parent = this.closest('.product-recommendations--parent');
+  
+    }
+    fetchProducts() {
+      fetch(this.dataset.url)
+        .then(response => response.text())
+        .then(text => {
+          const html = document.createElement('div');
+          html.innerHTML = text;
+          const recommendations = html.querySelector('product-recommendations');
+  
+          if (recommendations && recommendations.innerHTML.trim().length) {
+            this.innerHTML = recommendations.innerHTML;
+            if (this.parent) {
+              this.parent.classList.add('product-recommendations--full');
+              if (document.body.classList.contains('open-cart')) {
+                this.parent.classList.add('active');
+              }
+            }
+          }
+          this.classList.add('product-recommendations--loaded');
+        })
+      .catch(e => {
+        console.error(e);
+      });
+    }
+    connectedCallback() {
+      this.fetchProducts();
+    }
+  }
+  customElements.define('product-recommendations', ProductRecommendations);
+</script>
