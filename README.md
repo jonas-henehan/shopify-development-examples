@@ -1,3 +1,2 @@
 ### Shopify coding examples
-
-Please credit @jonas-henehan in your usage :D 
+For support implementing please contact <a href="mailto:jonas@oakreativ.nz">jonas@oakreativ.nz</a>
