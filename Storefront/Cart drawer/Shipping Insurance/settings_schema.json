@@ -1,0 +1,85 @@
+[
+  {
+    "name": "oakreativ",
+    "theme_name": "Oakreativ",
+    "theme_author": "Oakreativ",
+    "theme_version": "1.0.0",
+    "theme_support_url": "https:\/\/oakreativ.nz\/contact",
+    "theme_documentation_url": "https:\/\/oakreativ.nz",
+    "theme_support_email": "jonas@oakreativ.nz"
+  },
+  {
+    "name": "oakreativ",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Shipping insurance"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_shipping_insurance",
+        "label": "Enable shipping insurance",
+        "default": true
+      },
+      {
+        "type": "product",
+        "id": "shipping_insurance_product",
+        "label": "Shipping insurance product"
+      },
+      {
+        "type": "checkbox",
+        "id": "si_preselect",
+        "label": "Preselect insurance",
+        "default": true
+      },
+      {
+        "type": "text",
+        "id": "si_title",
+        "label": "Title",
+        "default": "Shipping insurance"
+      },
+      {
+        "type": "text",
+        "id": "si_text",
+        "label": "Supporting text",
+        "default": "In case of Loss or Damage in transit"
+      },
+      {
+        "type": "text",
+        "id": "si_badge_text",
+        "label": "Badge text",
+        "default": "Guaranteed Delivery"
+      },
+      {
+        "type": "color",
+        "id": "si_text_color",
+        "label": "Text",
+        "default": "#1e1e1e"
+      },
+      {
+        "type": "color",
+        "id": "si_bg_color",
+        "label": "Background",
+        "default": "#3B6145"
+      },
+      {
+        "type": "color",
+        "id": "si_input_color",
+        "label": "Checkbox",
+        "default": "#EB9B94"
+      },
+      {
+        "type": "color",
+        "id": "si_badge_color",
+        "label": "Badge text",
+        "default": "#3B6145"
+      },
+      {
+        "type": "color",
+        "id": "si_badge_bg",
+        "label": "Badge background",
+        "default": "#F7E8DE"
+      }
+    ]
+  }
+]

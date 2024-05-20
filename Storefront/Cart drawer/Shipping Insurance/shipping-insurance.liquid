@@ -1,0 +1,258 @@
+{% comment %}
+  —————
+  Usage {%- render 'shipping-insurance' -%}
+  —————
+  Note that the element will need to be present (but hidden) even if the cart is
+  empty or else move JS to your theme.js file to ensure it can execute properly
+  when adding the first product to your cart
+  —————
+  Update eventListeners as required to fit your cart events, e.g. cart:item-added,
+  theme:cart:added, theme:cart:change, theme:cart:build etc
+  —————
+{% endcomment %}
+
+{%- liquid
+  assign show_shipping_insurance = settings.enable_shipping_insurance
+  assign shipping_insurance_product = settings.shipping_insurance_product
+  assign shipping_insurance_variant = shipping_insurance_product.selected_or_first_available_variant
+  assign shipping_insurance_price = shipping_insurance_product.price | money
+  assign preselect = settings.si_preselect
+-%}
+
+<style>
+  :root {
+    --si-text-color: {{ settings.si_text_color }};
+    --si-bg-color: {{ settings.si_bg_color }};
+    --si-input-color: {{ settings.si_input_color }};
+    --si-badge-text: {{ settings.si_badge_color }};
+    --si-badge-bg: {{ settings.si_badge_bg }};
+  }
+
+  shipping-insurance {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    background: var(--si-bg-color);
+    margin-top: 15px;
+    padding: 15px;
+  }
+
+  .cart-option__left,
+  .cart-option__right {
+    display: flex;
+    gap: 0.25rem;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .cart-option__right {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .cart-option__data {
+    display: flex;
+    align-items: center;
+  }
+
+  .cart-option__data label {
+    color: var(--si-text-color);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .cart-option__input[type=checkbox] {
+    accent-color: var(--si-input-color);
+    color-scheme: light;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: unset;
+    width: unset;
+  }
+
+  .cart-option__text {
+    color: var(--si-text-color);
+    opacity: 0.8;
+    line-height: 1;
+  }
+
+  .cart-option__price {
+    font-weight: 600;
+  }
+
+  .cart-option__badge {
+    padding: 6px 12px;
+    background: var(--si-badge-bg);
+    color: var(--si-badge-text)
+  }
+</style>
+
+{%- if show_shipping_insurance -%}
+  <shipping-insurance
+    data-preselect="{{ preselect }}">
+    <div class="cart-option__left">
+      <div class="cart-option__data">
+        <input data-option-toggle id="cart-option__toggle"{% if preselect %} checked{% endif %}
+          type="checkbox" class="cart-option__input"
+          data-variant-id="{{  shipping_insurance_variant.id }}">
+        <label for="cart-option__toggle" class="cart-option__toggle">
+          {{ settings.si_title }}
+        </label>
+        <span> — </span>
+        <span class="cart-option__price">{{ shipping_insurance_price }}</span>
+      </div>
+      <span class="cart-option__text">{{ settings.si_text }}</span>
+    </div>
+    <div class="cart-option__right">
+      <div class="cart-option__badge">
+        {{ settings.si_badge_text }}
+      </div>
+    </div>
+  </shipping-insurance>
+
+  <script>
+    class ShippingInsurance extends HTMLElement {
+      constructor() {
+        super();
+        this.preselect = this.dataset.preselect;
+      }
+
+      connectedCallback() {
+        this.init();
+      }
+    
+      init() {        
+        this.toggle = this.querySelector('[data-option-toggle]');
+        if (this.toggle) {
+          this.variantId = this.toggle.dataset.variantId;
+          if(!this.variantId) return;
+          const dataOptionChecked = localStorage.getItem(`shippingInsurance`);
+          if (dataOptionChecked === null) {
+            localStorage.setItem(`shippingInsurance`, this.preselect ? 'true' : 'false');
+          } else {
+            this.toggle.checked = dataOptionChecked === 'true';
+          }
+          if (this.toggle.checked) {
+            this._updateLineItem(1, this.variantId);
+          } else {
+            this._updateLineItem(0, this.variantId);
+          }
+          this.toggle.addEventListener('change', () => this._handleCheckbox(this.variantId))
+        }
+      }
+    
+      _handleCheckbox(variantId) {        
+        if (this.toggle.checked) {
+          this._updateLineItem(1, variantId);
+          localStorage.setItem(`shippingInsurance`, 'true');
+        } else {
+          this._updateLineItem(0, variantId);
+          localStorage.setItem(`shippingInsurance`, 'false');
+        }
+      }
+    
+      _updateLineItem(qty, variantId) {
+        fetch(`${theme.routes.cart_url}.js`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+        })
+        .then((response) => response.json())
+        .then((cart) => {
+          this.variantInCart = cart.items.filter((item) => item.variant_id === parseInt(variantId));
+          if (cart.total_price === 0) return;
+          if(!this.variantInCart.length && qty === 1) {
+            this._updateCart(qty, variantId);
+          }
+          if(this.variantInCart.length && qty === 0) {
+            this._updateCart(qty, variantId);
+          }
+          if(this.variantInCart.length && (cart.total_price - this.variantInCart[0].price) === 0) {
+            this._updateCart(0, variantId);
+          }
+          
+        });
+      }
+    
+      _updateCart(qty, variantId) {
+        let formData = {
+          updates: {
+            [variantId]: qty,
+          },
+          sections: this.getSectionsToRender().map((section) => section.section),
+          sections_url: window.location.pathname
+        };
+    
+        fetch(`${theme.routes.cart_update_url}.js`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        })
+        .then(response => {
+          return response.json();
+        })
+        .then((response) => {
+          this.renderContents(response);
+          dispatchCustomEvent('cart:item-added', {
+            product: response.hasOwnProperty('items') ? response.items[0] : response
+          });
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+      }
+
+      getSectionsToRender() {
+        return [{
+          id: 'Cart',
+          section: 'main-cart',
+          selector: '.thb-cart-form'
+        },
+        {
+          id: 'Cart-Drawer',
+          section: 'cart-drawer',
+          selector: '.cart-drawer'
+        },
+        {
+          id: 'cart-drawer-toggle',
+          section: 'cart-bubble',
+          selector: '.thb-item-count'
+        }];
+      }
+
+      renderContents(parsedState) {
+        this.getSectionsToRender().forEach((section => {
+          if (!document.getElementById(section.id)) {
+            return;
+          }
+          const elementToReplace = document.getElementById(section.id).querySelector(section.selector) || document.getElementById(section.id);
+          elementToReplace.innerHTML = this.getSectionInnerHTML(parsedState.sections[section.section], section.selector);
+    
+          if (typeof CartDrawer !== 'undefined') {
+            new CartDrawer();
+          }
+          if (typeof Cart !== 'undefined') {
+            new Cart().renderContents(parsedState);
+          }
+        }));
+      }
+    
+      getSectionInnerHTML(html, selector = '.shopify-section') {
+        return new DOMParser()
+          .parseFromString(html, 'text/html')
+          .querySelector(selector).innerHTML;
+      }
+    };
+
+      
+    if (!window.customElements.get('shipping-insurance')) {
+      window.customElements.define('shipping-insurance', ShippingInsurance);
+    }
+
+    const shippingInsurance = document.querySelector('shipping-insurance');
+    if(shippingInsurance) document.addEventListener('cart:item-added', () => shippingInsurance.init());
+  </script>
+{%- endif -%}
