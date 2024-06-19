@@ -1,0 +1,56 @@
+{% comment %}
+
+  An adapted version of Klaviyo's Back In Stock code to allow for full customisation by merchant with zero coding changes
+  1. Add this file to your Snippets folder
+  2. Add `{% render 'klaviyo-back-in-stock' %}` just before the closing `</body>` tag
+  3. Add the additional settings to your `settings_schema.json` file
+
+{% endcomment %}
+
+<script src="https://a.klaviyo.com/media/js/onsite/onsite.js"></script>
+<script>
+    var klaviyo = klaviyo || [];
+    klaviyo.init({
+      account: "{{ settings.klaviyo_public_api_key }}",
+      {%- if settings.klaviyo_bis_include_tags != blank -%}
+        include_on_tags: "{{ settings.klaviyo_bis_include_tags }}",
+      {%- endif -%}
+      {%- if settings.klaviyo_bis_exclude_tags != blank -%},
+        exclude_on_tags: "{{ settings.klaviyo_bis_exclude_tags }}",
+      {%- endif -%}
+      {%- if settings.klaviyo_bis_enable_opt_in != blank %}
+        list: "{{ settings.klaviyo_bis_enable_opt_in }}",
+      {%- endif %}
+      platform: "shopify"
+    });
+    klaviyo.enable("backinstock",{ 
+    trigger: {
+      product_page_text: "{{ settings.klaviyo_bis_button_text }}",
+      product_page_class: "button w-full",
+      product_page_text_align: "center",
+      product_page_margin: "0px",
+      replace_anchor: false
+    },
+    modal: {
+      headline: "{{ settings.klaviyo_bis_modal_headline }}",
+      body_content: "{{ settings.klaviyo_bis_modal_text | escape }}",
+      email_field_label: "Email",
+      button_label: "{{ settings.klaviyo_bis_modal_button_text }}",
+      subscription_success_label: "{{ settings.klaviyo_bis_modal_success }}",
+      footer_content: '{{ settings.klaviyo_bis_modal_footer_content | escape }}',
+      additional_styles: "@import url('https://fonts.googleapis.com/css?family=Helvetica+Neue');",
+      drop_background_color: "{{ settings.klaviyo_bis_modal_overlay_background }}",
+      background_color: "{{ settings.klaviyo_bis_modal_background }}",
+      text_color: "{{ settings.klaviyo_bis_modal_text_color }}",
+      button_text_color: "{{ settings.klaviyo_bis_modal_button_text_color }}",
+      button_background_color: "{{ settings.klaviyo_bis_modal_button_background }}",
+      close_button_color: "{{ settings.klaviyo_bis_modal_close_button_color }}",
+      error_background_color: "{{ settings.klaviyo_bis_modal_error_background }}",
+      error_text_color: "{{ settings.klaviyo_bis_modal_error_text_color }}",
+      success_background_color: "{{ settings.klaviyo_bis_modal_success_background }}",
+      success_text_color: "{{ settings.klaviyo_bis_modal_success_text_color }}",
+      newsletter_subscribe_label: "{{ settings.klaviyo_bis_modal_opt_in_text }}",
+      subscribe_checked: true
+    }
+  });
+</script>

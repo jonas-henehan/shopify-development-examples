@@ -1,0 +1,161 @@
+
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Oakreativ",
+    "theme_author": "Oakreativ",
+    "theme_version": "1.0.0",
+    "theme_documentation_url": "https:\/\/oakreativ.nz",
+    "theme_support_url": "https:\/\/oakreativ.nz\/contact-us"
+  },
+  {
+    "name": "Klaviyo",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Back in stock"
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_public_api_key",
+        "label": "Public API key"       
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_bis_enable_opt_in",
+        "label": "Email list id",
+        "info": "When added, email list opt in checkbox will show in popup"
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_bis_button_text",
+        "label": "Trigger button text",
+        "default": "SOLD OUT - GET NOTIFIED WHEN BACK IN STOCK"
+      },
+      {
+        "type": "textarea",
+        "id": "klaviyo_bis_include_tags",
+        "label": "[OPTIONAL] Include tags",
+        "info": "A comma-separated list of product tags for which you want the back-in-stock button to show for. Case-sensitive. Leave blank to show for all products."
+      },
+      {
+        "type": "textarea",
+        "id": "klaviyo_bis_exlude_tags",
+        "label": "[OPTIONAL] Exclude tags",
+        "info": "A comma-separated list of product tags for which you **do not** want the back-in-stock button to show for. Case-sensitive. Leave blank to show for all products."
+      },
+      {
+        "type": "header",
+        "content": "Back in stock modal"
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_bis_modal_headline",
+        "label": "Headline",
+        "default": "{product_name}",
+        "info": "The headline that appears at the top of the popup. Use {product_name} to to dynamically fetch the product title."
+      },
+      {
+        "type": "textarea",
+        "id": "klaviyo_bis_modal_text",
+        "label": "Text content",
+        "default": "Register to receive a notification when this item comes back in stock.",
+        "info": "The text that appears inside the popup instructing the customer what to do."
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_bis_modal_button_text",
+        "label": "Button text",
+        "default": "Notify me when available",
+        "info": "The text within the submit button for this popup form."
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_bis_modal_success",
+        "label": "Success label text",
+        "default": "You're in! We'll let you know when it's back.",
+        "info": "The message that appears when someone successfully submits the popup form"
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_bis_modal_opt_in_text",
+        "label": "Email list opt-in label",
+        "default": "Add me to your email list."
+      },
+      {
+        "type": "textarea",
+        "id": "klaviyo_bis_modal_footer_content",
+        "label": "Footer content",
+        "info": "Optional text that will appear in the footer, below the submit button"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_overlay_background",
+        "label": "Overlay",
+        "default": "#000000"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_background",
+        "label": "Background",
+        "default": "#ffffff",
+        "info": "The background color of the popup form"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_text_color",
+        "label": "Text",
+        "default": "#1c1c1c",
+        "info": "The text color of the popup form"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_button_text_color",
+        "label": "Button text",
+        "default": "#ffffff",
+        "info": "The text color of the button on the popup form"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_button_background",
+        "label": "Button background",
+        "default": "#1C1C1C",
+        "info": "The background color of the form's submit button"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_close_button_color",
+        "label": "Close button",
+        "default": "#1C1C1C"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_error_background",
+        "label": "Error background",
+        "default": "#fcd6d7",
+        "info": "The background color of an error box that shows when there is an error submitting the form"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_error_text_color",
+        "label": "Error text",
+        "default": "#C72E2F",
+        "info": "The text color of the error message that shows when there is an error submitting the form"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_success_background",
+        "label": "Sucess background",
+        "default": "#d3efcd",
+        "info": "The background color of the success box that shows after someone submits the form successfully"
+      },
+      {
+        "type": "color",
+        "id": "klaviyo_bis_modal_success_text_color",
+        "label": "Success text",
+        "default": "#1B9500",
+        "info": "The text color of the success message that shows after someone submits the form successfully"
+      }
+    ]
+  }
+]
