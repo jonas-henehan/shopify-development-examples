@@ -1,0 +1,402 @@
+<style>
+  .cart-sidebar-discount {
+    display: flex;
+    flex-direction: column;
+    width:300px;
+    margin: 20px auto;
+  }
+  .cart-sidebar-discount input {
+    margin-top:20px;
+    background: #eee;
+    border: 1px solid #eee;
+    height:50px;
+    outline: none;
+    font-size: 18px;
+    letter-spacing: .75px;
+    text-align: center;
+  }
+  #apply-discount-btn {
+    background-color: #000;
+    color:#fff;
+    border: 0;
+    height: 60px;
+    width: 100%;
+    font-size: 18px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .75px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+  span.applied-discount-code-value>small {
+    background: #eee;
+    padding: 0px 10px;
+    color: #000;
+    font-weight: bold;
+    border-radius: 20px;
+  }
+  .loader {
+    border: 5px solid #f3f3f3;
+    border-top: 4px solid #000;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin .5s linear infinite;
+  }
+  #discount-code-error {
+    background: #ff00004f;
+    color: #e22120;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .applied-discount-code-wrapper {
+    display: none;
+    background: #ddd;
+    padding: 3px 6px;
+    border-radius: 25px;
+  }
+  .applied-discount-code-value {
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  
+  #discount-code-error:empty {
+    display: none;
+  }
+  .applied-discount-code-value:empty+button {
+    display: none;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .cart-discount-code__toggle {
+    cursor: pointer;
+    margin: 1rem 0;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .cart-discount-code__toggle,
+  .cart-discount-code__fields {
+    width: 100%;
+  }
+
+  .cart-discount-code__field {
+    max-height: 0;
+    transition: max-height 0.2s ease;
+    overflow: hidden;
+  }
+
+  .cart-discount-code__field.open {
+    max-height: 200px;
+  }
+
+  .cart-discount-code__toggle svg {
+    width: 1.4rem;
+  }
+
+  
+  .cart-discount-code__toggle.open .icon-minus,
+  .cart-discount-code__toggle .icon-plus {
+    display: block;
+  }
+
+  .cart-discount-code__toggle .icon-minus,
+  .cart-discount-code__toggle.open .icon-plus {
+    display: none;
+  }
+
+  .cart-discount-code__clear {
+    width: auto;
+    height: auto;
+    padding: 0;
+    min-height: 0px;
+    border: none;
+  }
+
+  .cart-discount-code__clear svg {
+    width: calc(var(--font-body-size)* .9);
+    height: calc(var(--font-body-size)* .9);
+  }
+
+  .cart-discount-code--clearing {
+    animation: discountLoading 2s infinite;
+  }
+
+  #discountCodeError {
+    color: #cc3c28;
+    margin-top: 0.5rem;
+    display: inline-block;
+  }
+
+  @keyframes discountLoading {
+    0%, 100% {
+      background-color: #ffe5e5;
+    }
+    50% {
+      background-color: #ffe5e56e;
+    }
+  }
+</style>
+
+<cart-discount-code-field data-section-id="{{ section.id }}">
+  <div class="cart-discount-code__wrapper">
+    <div class="cart-discount-code__toggle flex gap-2 justify-between items-center" aria-controls="DiscountField" aria-expanded="false">
+      <span>Apply promo code</span>
+      {%- render 'icon-plus' -%}
+      {%- render 'icon-minus' -%}
+    </div>
+
+    <div id="DiscountField" class="cart-discount-code__field flex gap-2 justify-between items-center">
+      <input data-discount-input type="text" name="discountCode" id="CartDiscountCode" class="form-control" placeholder="Enter your code">
+      <button data-submit-button type="submit" class="btn btn--primary" aria-label="Apply discount code">
+        <span>Apply code</span>
+        {%- render 'loading-spinner' -%}
+      </button>
+    </div>
+    <span id="discountCodeError"></span>
+  </div>
+</cart-discount-code-field>
+
+<script>
+if (!window.customElements.get('cart-discount-code-field')) {
+  class CartDiscountCodeField extends HTMLElement {
+    constructor() {
+      super();
+      this.sectionId = this.dataset.sectionId;
+      this.init = this.init.bind(this);
+      this.toggleDiscountField = this.toggleDiscountField.bind(this);
+      this.handleSubmit = this.handleSubmit.bind(this);
+      this.removeDiscount = this.removeDiscount.bind(this);
+    }
+
+    connectedCallback() {
+      this.init();
+
+      if (!this.observer) {
+        this.observer = new MutationObserver(() => {
+          this.init();
+        });
+
+        this.observer.observe(this, { childList: true, subtree: true });
+      }
+    }
+
+    disconnectedCallback() {
+      this.observer?.disconnect();
+    }
+
+    init() {
+      if (localStorage.appliedDiscountCode) this.showDiscount( JSON.parse(localStorage.appliedDiscountCode));
+      this.submitButton = this.querySelector('[data-submit-button]');
+      this.input = this.querySelector('[data-discount-input]');
+      this.toggleButton = this.querySelector('.cart-discount-code__toggle');
+      this.discountFieldEl = this.querySelector('.cart-discount-code__field');
+      this.clearButton = document.querySelector('[data-clear-discount]');
+
+      if (this.toggleButton) {
+        this.toggleButton.removeEventListener('click', this.toggleDiscountField);
+        this.toggleButton.addEventListener('click', this.toggleDiscountField);
+      }
+
+      if (this.submitButton) {
+        this.submitButton.removeEventListener('click', this.handleSubmit);
+        this.submitButton.addEventListener('click', this.handleSubmit);
+      }
+
+      if (this.clearButton) {
+        this.clearButton.removeEventListener('click', this.removeDiscount);
+        this.clearButton.addEventListener('click', this.removeDiscount);
+      }
+    }
+    toggleDiscountField() {
+      const open = !this.toggleButton.classList.contains('open');
+      this.toggleButton.classList.toggle('open', open);
+      this.toggleButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+      this.discountFieldEl?.classList.toggle('open', open);
+    }
+
+    handleSubmit(event) {
+      event.preventDefault();
+
+      const code = this.input?.value;
+      this.submitButton.classList.add('btn--loading');
+
+      fetch("/payments/config", { method: "GET" })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data.paymentInstruments) throw new Error("Missing paymentInstruments in response");
+      
+          const checkout_json_url = "/wallets/checkouts/";
+          const authorization_token = btoa(data.paymentInstruments.accessToken);
+      
+          return fetch("/cart.js", { method: "GET" })
+            .then((res) => res.json())
+            .then((cartData) => {
+              if (!cartData.items) throw new Error("Cart data is invalid");
+      
+              let body = {
+                checkout: {
+                  country: Shopify.country,
+                  discount_code: code,
+                  line_items: cartData.items,
+                  presentment_currency: Shopify.currency.active
+                }
+              };
+      
+              return fetch(checkout_json_url, {
+                headers: {
+                  accept: "*/*",
+                  "cache-control": "no-cache",
+                  authorization: "Basic " + authorization_token,
+                  "content-type": "application/json"
+                },
+                method: "POST",
+                body: JSON.stringify(body)
+              }).then((response) => response.json());
+            });
+        })
+        .then((data) => {
+          console.log('data', data)
+          const discountCodeError = document.querySelector("#discountCodeError");
+
+          // Either the call failed or we have incorrect discount code
+          if (!data || !data.checkout) {
+            // Check to see if there's an error with the code and add error message
+            if(data.errors && discountCodeError) discountCodeError.innerHTML = `${data.errors.discount_code[0].message}`;
+            this.submitButton.classList.remove('btn--loading');
+            return;
+          } 
+
+          // Check to see if the discount isn't applicable
+          if (data.checkout.applied_discount.applicable == false) {
+            // Show error message with reason why
+            if(data.checkout.applied_discount.non_applicable_reason && discountCodeError) discountCodeError.innerHTML = data.checkout.applied_discount.non_applicable_reason;
+            this.submitButton.classList.remove('btn--loading');
+            return;
+          }
+          
+      
+          if (data.checkout.applied_discounts?.length > 0) {
+            let discountApplyUrl = `/discount/${code}?v=${Date.now()}&redirect=/checkout/`;
+      
+            return fetch(discountApplyUrl)
+              .then((response) => response.text())
+              .then((result) => {
+                console.log('what is the result?')
+                let localStorageValue = {
+                  'title': data.checkout.applied_discount.title,
+                  'value': data.checkout.applied_discount.amount
+                };
+                localStorage.setItem("appliedDiscountCode", JSON.stringify(localStorageValue));
+                return data;
+              })
+              .catch((error) => {
+                console.error("Error applying discount:", error);
+                return data;
+              });
+          } else {
+            if (discountCodeError) discountCodeError.innerHTML = "Please Enter Valid Coupon Code.";
+            return data;
+          }
+        })
+        .then((data) => {
+          if (!data || !data.checkout) {
+            return;
+          }
+          this.updateCart(false, data.checkout.applied_discount);
+        })
+        .catch((error) => {
+          console.log(error)
+          return;
+        });
+    }
+
+    removeDiscount(event) {
+      let discountBadge = this.clearButton.closest('.discount');
+      if (discountBadge) discountBadge.classList.add('cart-discount-code--clearing');
+      fetch("/discount/CLEAR")
+        .then(() => {
+          document.cookie = 'discount_code=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        })
+        .then(() => {
+          this.updateCart(true);
+        })
+        .catch((error) => console.log('Error clearing discount', error));
+      localStorage.removeItem("appliedDiscountCode");
+    }
+
+    updateCart(clear, discount) {
+
+      let sectionsToBundle = [];
+      document.documentElement.dispatchEvent(
+        new CustomEvent('cart:grouped-sections', { bubbles: true, detail: { sections: sectionsToBundle } })
+      );
+
+      let updates = {};
+
+      const body = JSON.stringify({
+        updates: updates,
+        sections: sectionsToBundle,
+        sections_url: window.location.pathname
+      });
+
+      const config = FoxTheme.utils.fetchConfig('javascript');
+      config.headers['X-Requested-With'] = 'XMLHttpRequest';
+      config.body = body;
+
+      fetch(`${FoxTheme.routes.cart_update_url}`, config)
+        .then((response) => response.json())
+        .then(async (parsedState) => {
+          if (parsedState.status === 422 || parsedState.status) {
+            return;
+          }
+
+          const cartJson = await (await fetch(`${FoxTheme.routes.cart_url}`, FoxTheme.utils.fetchConfig())).json();
+          cartJson['sections'] = parsedState['sections'];
+          FoxTheme.pubsub.publish(FoxTheme.pubsub.PUB_SUB_EVENTS.cartUpdate, { cart: cartJson });
+        })
+        .then(() => this.init())
+        .then(() => this.showDiscount(discount))
+        .catch((e) => {
+          console.error(e);
+        });
+    }
+
+    showDiscount(discount) {
+      const existingDiscount = document.querySelector('.discounts .discount');
+      if (existingDiscount || !discount) return;
+      
+      const discountBadge = document.createElement('div');
+      const discountHTML = `
+        <li class="discount text-sm flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-discount icon--extra-small" viewBox="0 0 14 15" fill="none">
+            <path d="M2.31547 8.06547C2.23358 7.98349 2.18755 7.87236 2.1875 7.75648V2.6875H7.25648C7.37236 2.68755 7.48349 2.73358 7.56547 2.81547L12.997 8.24703C13.079 8.32907 13.1251 8.44031 13.1251 8.55629C13.1251 8.67227 13.079 8.78351 12.997 8.86555L8.36719 13.497C8.28515 13.579 8.17391 13.6251 8.05793 13.6251C7.94195 13.6251 7.83071 13.579 7.74867 13.497L2.31547 8.06547Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M4.59375 5.75C4.95619 5.75 5.25 5.45619 5.25 5.09375C5.25 4.73131 4.95619 4.4375 4.59375 4.4375C4.23131 4.4375 3.9375 4.73131 3.9375 5.09375C3.9375 5.45619 4.23131 5.75 4.59375 5.75Z" fill="currentColor"></path>
+          </svg>
+
+          <span>${discount.title}</span>
+          <span class="font-body-bold">(-${discount.value})</span>
+          <button data-clear-discount="" class="cart-discount-code__clear">
+            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="icon icon-close icon--medium" fill="none" viewBox="0 0 24 24">
+              <path d="M18.75 5.13496L5.25 18.8544" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path d="M18.75 18.8544L5.25 5.13496" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </li>`;
+      discountBadge.innerHTML = discountHTML;
+      const discountsContainer = document.querySelector('.discounts');
+      if (discountsContainer) discountsContainer.appendChild(discountBadge);
+    }
+  }
+
+  window.customElements.define('cart-discount-code-field', CartDiscountCodeField);
+}
+</script>
